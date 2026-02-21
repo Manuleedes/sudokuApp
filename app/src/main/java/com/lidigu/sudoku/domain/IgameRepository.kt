@@ -32,7 +32,7 @@ interface IgameRepository {
 
     )
     suspend fun updateSettings(
-        settings: settings,
+        settings: com.lidigu.sudoku.domain.Settings,
         onSuccess: (Unit) -> Unit,
         onError: (Exception) -> Unit
     )

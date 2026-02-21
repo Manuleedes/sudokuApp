@@ -1,6 +1,6 @@
 package com.lidigu.sudoku.domain
 
-data class settings(
-    val difficulty: difficulty,
+data class Settings(
+    val difficulty: Difficulty,
     val boundary: Int
 )

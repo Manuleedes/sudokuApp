@@ -5,7 +5,7 @@ import java.util.LinkedList
 
 data class sudokuPuzzle(
     val boundary: Int,
-    val difficulty: difficulty,
+    val difficulty: Difficulty,
     val graph: LinkedHashMap<Int, LinkedList<sudokuNode>>
         = buildNewSudoku(boundary, difficulty).graph,
     var elapsedTime: Long = 0L

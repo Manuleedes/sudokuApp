@@ -8,7 +8,7 @@ interface IStatisticsRepository {
 
     suspend fun updateStatistics(
         time: Long,
-        diff: difficulty,
+        diff: Difficulty,
         boundary: Int,
         onSuccess: (isRecord: Boolean) -> Unit,
         onError: (Exception) -> Unit
