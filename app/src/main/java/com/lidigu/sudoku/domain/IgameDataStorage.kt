@@ -2,8 +2,9 @@ package com.lidigu.sudoku.domain
 
 interface IgameDataStorage {
     suspend fun updateGame(game: sudokuPuzzle): gameStorageResult
-    suspend fun updateNode(x: Int, y: Int, elapsedTime:Long): gameStorageResult
+   // suspend fun updateNode(x: Int, y: Int, elapsedTime:Long): gameStorageResult
     suspend fun getCurrentGame(): gameStorageResult
+    suspend fun updateNode(x: Int, y: Int, color: Int, elapsedTime: Long): gameStorageResult
 }
 
 sealed class gameStorageResult{

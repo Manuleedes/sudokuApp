@@ -1,6 +1,6 @@
 package com.lidigu.sudoku.domain
 
-import android.provider.Settings
+import com.lidigu.sudoku.domain.Settings
 
 interface IgameRepository {
     suspend fun saveGame(
@@ -11,6 +11,11 @@ interface IgameRepository {
 
     suspend fun updateGame(
         game: sudokuPuzzle,
+        onSuccess: (Unit) -> Unit,
+        onError: (Exception) -> Unit
+    )
+    suspend fun createNewGame(
+        settings: Settings,
         onSuccess: (Unit) -> Unit,
         onError: (Exception) -> Unit
     )
