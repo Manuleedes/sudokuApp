@@ -1,28 +1,30 @@
 package com.lidigu.sudoku.ui
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
 
-private val LightColorScheme = lightColorScheme(
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.darkColors
+import androidx.compose.material.lightColors
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+
+private val LightColorPalette = lightColors(
     primary = primaryGreen,
     secondary = textColorLight,
     surface = lightGrey,
-    primaryContainer = gridLineColorLight,
+    primaryVariant = gridLineColorLight,
     onPrimary = accentAmber,
     onSurface = accentAmber
 )
 
-private val DarkColorScheme = darkColorScheme(
-    // main background color
+private val DarkColorPalette = darkColors(
+    //main background color
     primary = primaryCharcoal,
-    // used for text color
+    //used for text color
     secondary = textColorDark,
-    // background of sudoku board
+    //background of sudoku board
     surface = lightGreyAlpha,
-    // grid lines of sudoku board
-    primaryContainer = gridLineColorLight,
+    //grid lines of sudoku board
+    primaryVariant = gridLineColorLight,
     onPrimary = accentAmber,
     onSurface = accentAmber
 )
@@ -33,10 +35,9 @@ fun GraphSudokuTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
-        typography = Typography,
+        colors = if (darkTheme) DarkColorPalette else LightColorPalette,
+        typography = typography,
         shapes = shapes,
         content = content
     )
 }
-

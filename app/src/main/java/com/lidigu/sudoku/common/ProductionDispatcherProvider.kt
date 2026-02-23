@@ -3,12 +3,13 @@ package com.lidigu.sudoku.common
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 
-object ProductionDispatcherProvider: DispatcherProvider{
+object ProductionDispatcherProvider : DispatcherProvider {
     override fun provideUIContext(): CoroutineContext {
-      return Dispatchers.Main
+        return Dispatchers.Main
     }
 
     override fun provideIOContext(): CoroutineContext {
         return Dispatchers.IO
     }
+
 }

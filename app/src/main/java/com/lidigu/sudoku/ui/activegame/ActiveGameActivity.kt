@@ -7,24 +7,26 @@ import androidx.appcompat.app.AppCompatActivity
 import com.lidigu.sudoku.R
 import com.lidigu.sudoku.common.makeToast
 import com.lidigu.sudoku.ui.GraphSudokuTheme
-import com.lidigu.sudoku.ui.activegame.buildLogic.buildActiveGameLogic
 import com.lidigu.sudoku.ui.newgame.NewGameActivity
 
 class ActiveGameActivity : AppCompatActivity(), ActiveGameContainer {
     private lateinit var logic: ActiveGameLogic
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val viewModel = ActiveGameViewModel()
-        logic = buildActiveGameLogic(this, viewModel, applicationContext)
 
         setContent {
-            GraphSudokuTheme{
+            GraphSudokuTheme {
                 ActiveGameScreen(
                     onEventHandler = logic::onEvent,
                     viewModel
                 )
             }
         }
+
+        logic = buildActiveGameLogic(this, viewModel, applicationContext)
     }
 
     override fun onStart() {
@@ -35,9 +37,11 @@ class ActiveGameActivity : AppCompatActivity(), ActiveGameContainer {
     override fun onStop() {
         super.onStop()
         logic.onEvent(ActiveGameEvent.OnStop)
-    }
 
-    override fun showError() = makeToast(getString(R.string.generic_error))
+        //guarantee that onRestart not called
+
+        finish()
+    }
 
     override fun onNewGameClick() {
         startActivity(
@@ -47,4 +51,6 @@ class ActiveGameActivity : AppCompatActivity(), ActiveGameContainer {
             )
         )
     }
+
+    override fun showError() = makeToast(getString(R.string.generic_error))
 }

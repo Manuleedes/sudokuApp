@@ -2,8 +2,8 @@ package com.lidigu.sudoku.ui.activegame
 
 import com.lidigu.sudoku.common.BaseLogic
 import com.lidigu.sudoku.common.DispatcherProvider
-import com.lidigu.sudoku.domain.IStatisticsRepository
 import com.lidigu.sudoku.domain.IGameRepository
+import com.lidigu.sudoku.domain.IStatisticsRepository
 import com.lidigu.sudoku.domain.SudokuPuzzle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -16,11 +16,30 @@ class ActiveGameLogic(
     private val viewModel: ActiveGameViewModel,
     private val gameRepo: IGameRepository,
     private val statsRepo: IStatisticsRepository,
-    private val dispatcher: DispatcherProvider,
+    private val dispatcher: DispatcherProvider
+) : BaseLogic<ActiveGameEvent>(),
+    CoroutineScope {
 
-): BaseLogic<ActiveGameEvent>(), CoroutineScope {
+    inline fun startCoroutineTimer(
+        crossinline action: () -> Unit
+    ) = launch {
+        while (true) {
+            action()
+            delay(1000)
+        }
+    }
+
+    //Time offset makes the UI timer look more consistent
+    private val Long.timeOffset: Long
+        get() {
+            return if (this <= 0) 0
+            else this - 1
+        }
+
+    private var timerTracker: Job? = null
+
     override fun onEvent(event: ActiveGameEvent) {
-        when(event){
+        when (event) {
             is ActiveGameEvent.OnInput -> onInput(
                 event.input,
                 viewModel.timerState
@@ -32,71 +51,90 @@ class ActiveGameLogic(
         }
     }
 
-    private fun onTileFocused(x: Int, y: Int) {
-        viewModel.updateFocusState(x,y)
+
+
+    init {
+        //allows cancellation
+        jobTracker = Job()
     }
 
-    private fun onStop() = launch {
-        if (!viewModel.isCompleteState){
+    override val coroutineContext: CoroutineContext
+        get() = dispatcher.provideUIContext() + jobTracker
+
+
+
+    private fun onTileFocused(x: Int, y: Int) {
+        viewModel.updateFocusState(x, y)
+    }
+
+    private fun onStop() {
+        if (!viewModel.isCompleteState) {
             launch {
                 gameRepo.saveGame(
                     viewModel.timerState.timeOffset,
-                    {cancelStuff()},
+                    { cancelStuff() },
                     {
-
                         cancelStuff()
                         container?.showError()
                     }
                 )
             }
-        }else {
+        } else {
             cancelStuff()
         }
     }
 
-    private fun onStart() = launch {
-        gameRepo.getCurrentGame(
-            {
-                puzzle, isComplete ->
-                viewModel.initializeBoardState(
-                    puzzle,
-                    isComplete
-                )
-                if (!isComplete) timerTracker = startCoroutineTimer {
-                    viewModel.updateTimerState()
-                }
-            },
-            {
-                container?.onNewGameClick()
-            }
-        )
+    private fun cancelStuff() {
+        if (timerTracker?.isCancelled == false) timerTracker?.cancel()
+        jobTracker.cancel()
     }
+
+    /**
+     * get current game
+     */
+    private fun onStart() =
+        launch {
+            gameRepo.getCurrentGame(
+                { puzzle, isComplete ->
+                    viewModel.initializeBoardState(
+                        puzzle,
+                        isComplete
+                    )
+                    if (!isComplete) timerTracker = startCoroutineTimer {
+                        viewModel.updateTimerState()
+                    }
+                },
+                {
+                    //Probably this happened when the App is first run or data deleted.
+                    //Prompt the user to create a new game immediately.
+                    container?.onNewGameClick()
+                }
+            )
+        }
 
     private fun onNewGameClicked() = launch {
         viewModel.showLoadingState()
 
-        if (!viewModel.isCompleteState){
+        if (!viewModel.isCompleteState) {
             gameRepo.getCurrentGame(
-                {
-                    puzzle, _ ->
+                { puzzle, _ ->
                     updateWithTime(puzzle)
                 },
                 {
                     container?.showError()
                 }
             )
-        }else{
+        } else {
             navigateToNewGame()
         }
     }
 
-    private fun updateWithTime(puzzle: SudokuPuzzle) = launch{
-        gameRepo.updateGame(
-            puzzle.copy(elapsedTime = viewModel.timerState.timeOffset),
-            {navigateToNewGame()},
+    private fun updateWithTime(puzzle: SudokuPuzzle) = launch {
+        gameRepo.updateGame(puzzle.copy(elapsedTime = viewModel.timerState.timeOffset),
+            { navigateToNewGame() },
             {
-                container?.showError()
                 navigateToNewGame()
+                container?.showError()
             }
         )
     }
@@ -106,20 +144,17 @@ class ActiveGameLogic(
         container?.onNewGameClick()
     }
 
-    private fun cancelStuff() {
-        if (timerTracker?.isCancelled == false) timerTracker?.cancel()
-        jobTracker.cancel()
-
-    }
-
+    /**
+     * Check for any tile which hasFocus, and if so, write that value
+     */
     private fun onInput(input: Int, elapsedTime: Long) = launch {
         var focusedTile: SudokuTile? = null
         viewModel.boardState.values.forEach {
             if (it.hasFocus) focusedTile = it
         }
-        if (focusedTile != null){
-            gameRepo.updateNode(
-                focusedTile!!.x,
+
+        if (focusedTile != null) {
+            gameRepo.updateNode(focusedTile!!.x,
                 focusedTile!!.y,
                 input,
                 elapsedTime,
@@ -131,14 +166,12 @@ class ActiveGameLogic(
                             it.y,
                             input,
                             false
-
                         )
                     }
-                    if (isComplete){
+                    if (isComplete) {
                         timerTracker?.cancel()
                         checkIfNewRecord()
                     }
-
                 },
                 //error
                 {
@@ -146,44 +179,22 @@ class ActiveGameLogic(
                 }
             )
         }
+
     }
+
     private fun checkIfNewRecord() = launch {
-        statsRepo.updateStatistics(
+        statsRepo.updateStatistic(
             viewModel.timerState,
             viewModel.difficulty,
             viewModel.boundary,
-            {
-                isRecord ->
+            { isRecord ->
                 viewModel.isNewRecordState = isRecord
                 viewModel.updateCompleteState()
             },
             {
                 container?.showError()
                 viewModel.updateCompleteState()
-
             }
         )
     }
-
-    override val coroutineContext: CoroutineContext
-        get() = dispatcher.provideIOContext() + jobTracker
-    init {
-        jobTracker = Job()
-    }
-    inline fun startCoroutineTimer(
-        crossinline action: () -> Unit
-    ) = launch {
-        while (true){
-            action()
-            delay(1000)
-        }
-    }
-    private var timerTracker: Job? = null
-
-    private val Long.timeOffset: Long
-        get() {
-            return if (this <= 0) 0
-            else this -1
-        }
-
 }

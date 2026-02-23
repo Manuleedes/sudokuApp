@@ -1,11 +1,11 @@
 <resources>
-    <string name="app_name">sudoku game</string>
-    <string name="hard">hard</string>
-    <string name="easy">easy</string>
-    <string name="medium">medium</string>
+    <string name="app_name">Graph Sudoku</string>
     <string name="dimensions">Dimensions:</string>
     <string name="difficulty_title">Difficulty:</string>
     <string name="difficulty">Difficulty</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
     <string name="loading">Graph Sudoku</string>
     <string name="game_complete">Game Complete!</string>
     <string name="generic_error">An error has occurred.</string>

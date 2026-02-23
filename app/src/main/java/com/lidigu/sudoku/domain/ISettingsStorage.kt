@@ -5,8 +5,8 @@ interface ISettingsStorage {
     suspend fun updateSettings(settings: Settings): SettingsStorageResult
 }
 
-
-sealed class SettingsStorageResult{
-    data class OnSuccess(val settings: Settings): SettingsStorageResult()
-    data class OnError(val exception: Exception): SettingsStorageResult()
+sealed class SettingsStorageResult {
+    data class OnSuccess(val settings: Settings) : SettingsStorageResult()
+    object OnComplete : SettingsStorageResult()
+    data class OnError(val exception: Exception) : SettingsStorageResult()
 }

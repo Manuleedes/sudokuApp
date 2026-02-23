@@ -1,5 +1,6 @@
 package com.lidigu.sudoku.ui.activegame
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
@@ -26,40 +27,69 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import com.lidigu.sudoku.R
 import com.lidigu.sudoku.common.toTime
 import com.lidigu.sudoku.computation.sqrt
-import com.lidigu.sudoku.ui.components.AppToolbar
-import com.lidigu.sudoku.ui.components.LoadingScreen
-import com.lidigu.sudoku.ui.textColorLight
-import com.lidigu.sudoku.ui.textColorDark
-import com.lidigu.sudoku.ui.mutableSudokuSquare
-import com.lidigu.sudoku.ui.readOnlySudokuSquare
-import com.lidigu.sudoku.ui.userInputtedNumberLight
-import com.lidigu.sudoku.ui.userInputtedNumberDark
-import com.lidigu.sudoku.ui.activeGameSubtitle
-import com.lidigu.sudoku.ui.inputButton
-import com.lidigu.sudoku.ui.newGameSubtitle
+import com.lidigu.sudoku.ui.*
+import com.lidigu.sudoku.ui.newgame.AppToolbar
 
+/**
+ * This enum represents different states which this feature of the user interface
+ * can possess.
+ *
+ * The actual state is held in the ViewModel, but we will see how we can update our composable UI
+ * by binding to the ViewModel's Function Types we created in the previous part of the tutorial
+ */
+enum class ActiveGameScreenState {
+    LOADING,
+    ACTIVE,
+    COMPLETE
+}
+
+/**
+ * ActiveGameScreen represents the Root composable in this hierarchy of composables.
+ *
+ * It has the responsibility of setting up the core elements of the UI, and also
+ * animating between them.
+ *
+ */
 @Composable
 fun ActiveGameScreen(
+    //The event handler Function Type reference is how we call back to the Presentation Logic when
+    //the user interacts with the application. It must be passed down to any composable which has
+    //such interactions.
     onEventHandler: (ActiveGameEvent) -> Unit,
     //We also pass in the ViewModel which is how we actually give the data to our UI
     viewModel: ActiveGameViewModel
 ) {
 
+    //In very simple language, whenever we have some kind of data, or state, which may change at
+    //runtime, we want to wrap that data in a remember delegate. This tells the tells the compose
+    //library under the hood, to watch for changes, and to redraw the UI if a change occurs.
     val contentTransitionState = remember {
-
+        //Now, MutableTransitionState is used specifically for animations here, so don't use this
+        //everywhere. We will see a more general purpose example of remembered state later on.
         MutableTransitionState(
             ActiveGameScreenState.LOADING
         )
     }
 
+    //Our remember delegate prepares compose for updates, but we also need a way to actually update
+    //the value. We do this by binding a lambda expression to one of the Function Types which
+    //our ViewModel possesses. When one of those functions is invoked in the ViewModel,
+    //the program automatically jumps to and executes this code within our composable.
+    //This is what actually triggers the Recomposition.
     viewModel.subContentState = {
         contentTransitionState.targetState = it
     }
 
+    //We have a remembered transition state, and a way to update that state from the ViewModel.
+    //Now we need to set up the transitions animations themselves. This is where you can get as
+    //creative as you like. In this app, each content state has it's own composable associated
+    //with it. We animate between them simply by changing the alpha, or transparency.
     val transition = updateTransition(contentTransitionState)
 
     val loadingAlpha by transition.animateFloat(
-
+        //The transition spec tells compose details about what the animation should
+        //look like. Essentially, this means we don't have to write our own mathematical
+        //instructions, which is great for someone like me who sucks at arithmetic.
         transitionSpec = { tween(durationMillis = 300) }
     ) {
         if (it == ActiveGameScreenState.LOADING) 1f else 0f
@@ -77,7 +107,8 @@ fun ActiveGameScreen(
         if (it == ActiveGameScreenState.COMPLETE) 1f else 0f
     }
 
-
+    //One option for compose, is to use a Scaffold as a skeleton for your UI. I personally prefer
+    //to do this myself since it is not difficult at all, and doesn't hide anything from me.
     Column(
         Modifier
             .background(MaterialTheme.colors.primary)
@@ -134,6 +165,10 @@ fun ActiveGameScreen(
     }
 }
 
+/**
+ * As explained in a previous part of the tutorial, by creating our Toolbar Icon here and passing
+ * it into the AppToolbar composable, we make AppToolbar reusable.
+ */
 @Composable
 fun NewGameIcon(onEventHandler: (ActiveGameEvent) -> Unit) {
     Icon(
@@ -153,8 +188,13 @@ fun NewGameIcon(onEventHandler: (ActiveGameEvent) -> Unit) {
     )
 }
 
-/*
-the UI into the smallest reasonable parts.
+/**
+ * The most complex part of the UI comes from an Active sudoku game. A 9x9 puzzle has 81 different
+ * Text composables, which is a large number of widgets. The way I went about writing this
+ * composable was to think of each part of the Sudoku Game as a layer.
+ *
+ * Be sure to avoid writing God Composables by making usage of Helper functions which break down
+ * the UI into the smallest reasonable parts.
  */
 @Composable
 fun GameContent(
@@ -162,8 +202,15 @@ fun GameContent(
     viewModel: ActiveGameViewModel
 ) {
 
+    //Box with constraints is a composable wrapper, which gives us information about the height,
+    //width, and other measurements. We can use that information within it's lambda expression.
     BoxWithConstraints {
 
+        //We need to know the screen width in order to determine how wide and tall the sudoku
+        //board should be. Here we ask for the max width of this constraint layout, but we need
+        //that value to be in Density Independent pixels, and it needs to be relative to the
+        //density of the screen as well. That's where the toDp() extension functions comes in,
+        //and it uses the LocalDensity to determine that value.
         val screenWidth = with(LocalDensity.current) {
             constraints.maxWidth.toDp()
         }
@@ -178,8 +225,13 @@ fun GameContent(
             }
         }
 
+        //Next, we will write a ConstraintLayout, which is a totally awesome way to manage
+        //dynamic Layouts.
         ConstraintLayout {
 
+            //Now, in order to constraint composables to each other, we need a way for them to
+            //reference each other. This is equivalent to settings IDs for XML views. First we
+            //create these references, and you will see how we bind them later on.
             val (board, timer, diff, inputs) = createRefs()
 
             //Let's create a Layout container for the Puzzle Board.
@@ -278,8 +330,12 @@ fun SudokuBoard(
     size: Dp
 ) {
     val boundary = viewModel.boundary
+
+    //We want to evenly distribute the screen real estate for each sudoku tile
     val tileOffset = size.value / boundary
 
+    //neverEqualPolicy ensures that even minor changes in the state like hasFocus actually triggers
+    //a recomposition
     var boardState by remember {
         mutableStateOf(viewModel.boardState, neverEqualPolicy())
     }
@@ -298,6 +354,10 @@ fun SudokuBoard(
     BoardGrid(boundary = boundary, tileOffset = tileOffset)
 }
 
+/**
+ * Here we render the text fields which represent tiles in the puzzle. They can either be readOnly
+ * or mutable, thus meaning that we need to render them differently.
+ */
 @Composable
 fun SudokuTextFields(
     onEventHandler: (ActiveGameEvent) -> Unit,
@@ -351,6 +411,13 @@ fun SudokuTextFields(
         }
     }
 }
+
+
+/**
+ * This will draw the gridlines that separate sudoku puzzles.
+ * To make it more obvious to the User which subgrids are which, we draw different borders to
+ * separate 4x4 or 9x9 sub grids.
+ */
 @Composable
 fun BoardGrid(boundary: Int, tileOffset: Float) {
     (1 until boundary).forEach {
@@ -418,6 +485,8 @@ fun SudokuInputButton(
     onEventHandler: (ActiveGameEvent) -> Unit,
     number: Int
 ) {
+    //This wrapper allows us to style a nice looking button instead of just adding onClick on a
+    //text composable
     TextButton(
         //Here is how we handle click events using onClick and our onEventHandler
         onClick = { onEventHandler.invoke(ActiveGameEvent.OnInput(number)) },
@@ -435,6 +504,9 @@ fun SudokuInputButton(
     }
 }
 
+/**
+ * This screen represents when the user has completed a puzzle.
+ */
 @Composable
 fun GameCompleteContent(timerState: Long, isNewRecordState: Boolean) {
     Column(
@@ -482,3 +554,4 @@ fun GameCompleteContent(timerState: Long, isNewRecordState: Boolean) {
         )
     }
 }
+
