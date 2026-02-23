@@ -2,10 +2,10 @@ package com.lidigu.sudoku.ui.activegame
 
 import com.lidigu.sudoku.domain.Difficulty
 import com.lidigu.sudoku.domain.getHash
-import com.lidigu.sudoku.domain.sudokuPuzzle
+import com.lidigu.sudoku.domain.SudokuPuzzle
 
 class ActiveGameViewModel {
-    internal var subBoardState: ((HashMap<Int, sudokuTile>) -> Unit)? = null
+    internal var subBoardState: ((HashMap<Int, SudokuTile>) -> Unit)? = null
     internal var subContentState: ((ActiveGameScreenState) -> Unit)? = null
     internal var subTimerState: ( (Long) -> Unit)? = null
 
@@ -20,18 +20,18 @@ class ActiveGameViewModel {
     internal var timerState: Long = 0L
     internal var difficulty = Difficulty.MEDIUM
     internal var boundary = 9
-    internal var boardState: HashMap<Int, sudokuTile> = HashMap()
+    internal var boardState: HashMap<Int, SudokuTile> = HashMap()
 
     internal var isCompleteState: Boolean = false
     internal var isNewRecordState: Boolean = false
 
     fun initializeBoardState(
-        puzzle: sudokuPuzzle,
+        puzzle: SudokuPuzzle,
         isComplete: Boolean
     ){
         puzzle.graph.forEach {
             val node = it.value[0]
-            boardState[it.key] = sudokuTile(
+            boardState[it.key] = SudokuTile(
                 node.x,
                 node.y,
                 node.color,
@@ -42,9 +42,9 @@ class ActiveGameViewModel {
         val contentState: ActiveGameScreenState
         if (isComplete){
             isCompleteState = true
-            contentState = ActiveGameContentState.COMPLETE
+            contentState = ActiveGameScreenState.COMPLETE
         }else{
-            contentState = ActiveGameContentState.ACTIVE
+            contentState = ActiveGameScreenState.ACTIVE
         }
 
         boundary = puzzle.boundary
@@ -85,7 +85,7 @@ class ActiveGameViewModel {
     }
 
 }
-class sudokuTile(
+class SudokuTile(
     val x: Int,
     val y: Int,
     var value: Int,

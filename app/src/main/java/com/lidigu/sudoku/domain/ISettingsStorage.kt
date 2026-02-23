@@ -1,12 +1,12 @@
 package com.lidigu.sudoku.domain
 
 interface ISettingsStorage {
-    suspend fun getSettings(): settingsStorageResult
-    suspend fun updateSettings(settings: Settings): settingsStorageResult
+    suspend fun getSettings(): SettingsStorageResult
+    suspend fun updateSettings(settings: Settings): SettingsStorageResult
 }
 
 
-sealed class settingsStorageResult{
-    data class OnSuccess(val settings: Settings): settingsStorageResult()
-    data class OnError(val exception: Exception): settingsStorageResult()
+sealed class SettingsStorageResult{
+    data class OnSuccess(val settings: Settings): SettingsStorageResult()
+    data class OnError(val exception: Exception): SettingsStorageResult()
 }

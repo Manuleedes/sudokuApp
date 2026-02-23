@@ -7,13 +7,15 @@ import androidx.appcompat.app.AppCompatActivity
 import com.lidigu.sudoku.R
 import com.lidigu.sudoku.common.makeToast
 import com.lidigu.sudoku.ui.GraphSudokuTheme
-import kotlin.jvm.java
+import com.lidigu.sudoku.ui.activegame.buildLogic.buildActiveGameLogic
+import com.lidigu.sudoku.ui.newgame.NewGameActivity
 
 class ActiveGameActivity : AppCompatActivity(), ActiveGameContainer {
     private lateinit var logic: ActiveGameLogic
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val viewModel = ActiveGameViewModel()
+        logic = buildActiveGameLogic(this, viewModel, applicationContext)
 
         setContent {
             GraphSudokuTheme{
@@ -23,7 +25,6 @@ class ActiveGameActivity : AppCompatActivity(), ActiveGameContainer {
                 )
             }
         }
-        logic = buildActiveGameLogic(this, viewModel, applicationContext)
     }
 
     override fun onStart() {

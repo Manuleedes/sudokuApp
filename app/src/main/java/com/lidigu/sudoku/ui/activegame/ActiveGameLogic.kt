@@ -3,8 +3,8 @@ package com.lidigu.sudoku.ui.activegame
 import com.lidigu.sudoku.common.BaseLogic
 import com.lidigu.sudoku.common.DispatcherProvider
 import com.lidigu.sudoku.domain.IStatisticsRepository
-import com.lidigu.sudoku.domain.IgameRepository
-import com.lidigu.sudoku.domain.sudokuPuzzle
+import com.lidigu.sudoku.domain.IGameRepository
+import com.lidigu.sudoku.domain.SudokuPuzzle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
 class ActiveGameLogic(
     private val container: ActiveGameContainer?,
     private val viewModel: ActiveGameViewModel,
-    private val gameRepo: IgameRepository,
+    private val gameRepo: IGameRepository,
     private val statsRepo: IStatisticsRepository,
     private val dispatcher: DispatcherProvider,
 
@@ -90,7 +90,7 @@ class ActiveGameLogic(
         }
     }
 
-    private fun updateWithTime(puzzle: sudokuPuzzle) = launch{
+    private fun updateWithTime(puzzle: SudokuPuzzle) = launch{
         gameRepo.updateGame(
             puzzle.copy(elapsedTime = viewModel.timerState.timeOffset),
             {navigateToNewGame()},
@@ -113,7 +113,7 @@ class ActiveGameLogic(
     }
 
     private fun onInput(input: Int, elapsedTime: Long) = launch {
-        var focusedTile: sudokuTile? = null
+        var focusedTile: SudokuTile? = null
         viewModel.boardState.values.forEach {
             if (it.hasFocus) focusedTile = it
         }

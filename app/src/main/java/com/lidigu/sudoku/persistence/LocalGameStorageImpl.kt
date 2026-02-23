@@ -1,10 +1,9 @@
 package com.lidigu.sudoku.persistence
 
-import android.R
-import com.lidigu.sudoku.domain.IgameDataStorage
-import com.lidigu.sudoku.domain.gameStorageResult
+import com.lidigu.sudoku.domain.IGameDataStorage
+import com.lidigu.sudoku.domain.GameStorageResult
 import com.lidigu.sudoku.domain.getHash
-import com.lidigu.sudoku.domain.sudokuPuzzle
+import com.lidigu.sudoku.domain.SudokuPuzzle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -19,17 +18,17 @@ private const val FILE_NAME = "game_state.txt"
 class LocalGameStorageImpl(
     fileStorageDirectory: String,
     private val pathToStorageFile: File = File(fileStorageDirectory, FILE_NAME)
-) : IgameDataStorage{
-    override suspend fun updateGame(game: sudokuPuzzle): gameStorageResult
+) : IGameDataStorage{
+    override suspend fun updateGame(game: SudokuPuzzle): GameStorageResult
      = withContext(Dispatchers.IO) {
         try {
             updateGameData (game)
-            gameStorageResult.OnSuccess(game)
+            GameStorageResult.OnSuccess(game)
         }catch (e: Exception){
-            gameStorageResult.OnError(e)
+            GameStorageResult.OnError(e)
         }
     }
-    private fun updateGameData(game: sudokuPuzzle){
+    private fun updateGameData(game: SudokuPuzzle){
         try {
             val fileOutputStream = FileOutputStream(pathToStorageFile)
             val objectOutputStream = ObjectOutputStream(fileOutputStream)
@@ -41,23 +40,23 @@ class LocalGameStorageImpl(
     }
 
     override suspend fun updateNode(x: Int, y: Int, color: Int,elapsedTime: Long):
-            gameStorageResult = withContext(Dispatchers.IO) {
+            GameStorageResult = withContext(Dispatchers.IO) {
        try {
             val game = getGame()
            game.graph[getHash(x,y)]!!.first.color = color
            game.elapsedTime = elapsedTime
            updateGameData(game)
-           gameStorageResult.OnSuccess(game)
+           GameStorageResult.OnSuccess(game)
        }catch (e: Exception){
-           gameStorageResult.OnError(e)
+           GameStorageResult.OnError(e)
        }
     }
-    private fun getGame(): sudokuPuzzle{
+    private fun getGame(): SudokuPuzzle{
         try {
-            var game: sudokuPuzzle
+            var game: SudokuPuzzle
             val fileInputStream = FileInputStream(pathToStorageFile)
             val objectInputStream = ObjectInputStream(fileInputStream)
-            game = objectInputStream.readObject() as sudokuPuzzle
+            game = objectInputStream.readObject() as SudokuPuzzle
             objectInputStream.close()
             return game
         }catch (e: Exception){
@@ -65,13 +64,13 @@ class LocalGameStorageImpl(
         }
     }
 
-    override suspend fun getCurrentGame(): gameStorageResult =
+    override suspend fun getCurrentGame(): GameStorageResult =
         withContext(Dispatchers.IO)
         {
             try {
-                gameStorageResult.OnSuccess(getGame())
+                GameStorageResult.OnSuccess(getGame())
             }catch (e: Exception){
-                gameStorageResult.OnError(e)
+                GameStorageResult.OnError(e)
             }
             }
 

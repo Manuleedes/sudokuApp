@@ -10,13 +10,12 @@ import androidx.compose.ui.text.style.TextAlign
 import com.lidigu.sudoku.ui.textColorDark
 import com.lidigu.sudoku.ui.textColorLight
 
-
 @Composable
 fun AppToolbar(
     modifier: Modifier = Modifier,
-     title: String,
+    title: String,
     icon: @Composable () -> Unit
-               ) {
+) {
     TopAppBar(
         modifier = modifier,
         backgroundColor = MaterialTheme.colors.primary,
@@ -27,17 +26,12 @@ fun AppToolbar(
                 style = MaterialTheme.typography.h6,
                 color = if (MaterialTheme.colors.isLight) textColorLight
                 else textColorDark,
-                    textAlign = TextAlign.Start,
+                textAlign = TextAlign.Start,
                 maxLines = 1
             )
         },
         actions = {
             icon()
         }
-
-
-
-
-    ) { }
-
+    )
 }

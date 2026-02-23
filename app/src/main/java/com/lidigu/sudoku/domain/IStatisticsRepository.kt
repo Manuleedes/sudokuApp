@@ -2,7 +2,7 @@ package com.lidigu.sudoku.domain
 
 interface IStatisticsRepository {
     suspend fun getStatistics(
-        onSuccess: (userStatistics) -> Unit,
+        onSuccess: (UserStatistics) -> Unit,
         onError: (Exception) -> Unit
     )
 

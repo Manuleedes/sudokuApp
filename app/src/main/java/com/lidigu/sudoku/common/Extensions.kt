@@ -12,11 +12,11 @@ internal fun Activity.makeToast(message: String){
         Toast.LENGTH_LONG
     ).show()
 }
-internal fun Long.toTime(): String =
+fun Long.toTime(): String =
     if (this >= 3600) "+59:59"
     else "%02d:%02d".format((this % 3600) / 60, this % 60)
 
-internal val Difficulty.toLocalisedResource: Int
+val Difficulty.toLocalizedResource: Int
     get() {
         return when(this) {
             Difficulty.EASY -> R.string.easy

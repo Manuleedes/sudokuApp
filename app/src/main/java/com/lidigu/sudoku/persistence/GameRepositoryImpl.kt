@@ -2,24 +2,25 @@ package com.lidigu.sudoku.persistence
 
 
 import com.lidigu.sudoku.domain.ISettingsStorage
-import com.lidigu.sudoku.domain.IgameDataStorage
-import com.lidigu.sudoku.domain.IgameRepository
+import com.lidigu.sudoku.domain.IGameDataStorage
+import com.lidigu.sudoku.domain.IGameRepository
 import com.lidigu.sudoku.domain.Settings
-import com.lidigu.sudoku.domain.gameStorageResult
-import com.lidigu.sudoku.domain.settingsStorageResult
-import com.lidigu.sudoku.domain.sudokuPuzzle
+import com.lidigu.sudoku.domain.SudokuPuzzle
+import com.lidigu.sudoku.domain.GameStorageResult
+import com.lidigu.sudoku.domain.SettingsStorageResult
+import com.lidigu.sudoku.computation.puzzleIsComplete
 
 class GameRepositoryImpl(
-    private val gameStorage: IgameDataStorage,
+    private val gameStorage: IGameDataStorage,
     private val settingsStorage: ISettingsStorage
-): IgameRepository {
+): IGameRepository {
     override suspend fun saveGame(
         elapsedTime: Long,
         onSuccess: (Unit) -> Unit,
         onError: (Exception) -> Unit
     ) {
         when(val getCurrentGameResult = gameStorage.getCurrentGame()){
-            is gameStorageResult.OnSuccess -> {
+            is GameStorageResult.OnSuccess -> {
                 gameStorage.updateGame(
                     getCurrentGameResult.currentGame.copy(
                         elapsedTime = elapsedTime
@@ -27,20 +28,20 @@ class GameRepositoryImpl(
                 )
                 onSuccess(Unit)
             }
-            is gameStorageResult.OnError -> {
+            is GameStorageResult.OnError -> {
                 onError(getCurrentGameResult.exception)
             }
         }
     }
 
     override suspend fun updateGame(
-        game: sudokuPuzzle,
+        game: SudokuPuzzle,
         onSuccess: (Unit) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        when(val updateGameResult: gameStorageResult = gameStorage.updateGame(game)){
-            is gameStorageResult.OnSuccess -> onSuccess(Unit)
-            is gameStorageResult.OnError ->onError(updateGameResult.exception)
+        when(val updateGameResult: GameStorageResult = gameStorage.updateGame(game)){
+            is GameStorageResult.OnSuccess -> onSuccess(Unit)
+            is GameStorageResult.OnError ->onError(updateGameResult.exception)
         }
     }
 
@@ -50,19 +51,19 @@ class GameRepositoryImpl(
         onError: (Exception) -> Unit
     ) {
         when(val updateSettingsResult = settingsStorage.updateSettings(settings)){
-          is  settingsStorageResult.OnSuccess -> {
+          is  SettingsStorageResult.OnSuccess -> {
                 when (val updateGameResult = createAndWriteNewGame(settings)){
-                    is gameStorageResult.OnError -> onError(updateGameResult.exception)
-                    is gameStorageResult.OnSuccess -> onSuccess(Unit)
+                    is GameStorageResult.OnError -> onError(updateGameResult.exception)
+                    is GameStorageResult.OnSuccess -> onSuccess(Unit)
                 }
             }
-            is settingsStorageResult.OnError -> onError(updateSettingsResult.exception)
+            is SettingsStorageResult.OnError -> onError(updateSettingsResult.exception)
         }
 
     }
-    private suspend fun createAndWriteNewGame(settings: Settings) : gameStorageResult{
+    private suspend fun createAndWriteNewGame(settings: Settings) : GameStorageResult{
         return gameStorage.updateGame(
-            sudokuPuzzle(
+            SudokuPuzzle(
                 settings.boundary,
                 settings.difficulty
             )
@@ -78,10 +79,10 @@ class GameRepositoryImpl(
         onError: (Exception) -> Unit
     ) {
         when (val result = gameStorage.updateNode(x,y, color, elapsedTime)){
-            is gameStorageResult.OnSuccess -> onSuccess(
-                puzzleIsCompleted(result.currentGame)
+            is GameStorageResult.OnSuccess -> onSuccess(
+                puzzleIsComplete(result.currentGame)
             )
-            is gameStorageResult.OnError -> onError(
+            is GameStorageResult.OnError -> onError(
                 result.exception
             )
 
@@ -89,30 +90,30 @@ class GameRepositoryImpl(
     }
 
     override suspend fun getCurrentGame(
-        onSuccess: (currentGame: sudokuPuzzle, isComplete: Boolean) -> Unit,
+        onSuccess: (currentGame: SudokuPuzzle, isComplete: Boolean) -> Unit,
         onError: (Exception) -> Unit
     ) {
         when (val getCurrentGameResult = gameStorage.getCurrentGame()){
-            is gameStorageResult.OnSuccess -> onSuccess(
+            is GameStorageResult.OnSuccess -> onSuccess(
                 getCurrentGameResult.currentGame,
-                puzzleIsCompleted(
+                puzzleIsComplete(
                     getCurrentGameResult.currentGame
                 )
             )
-            is gameStorageResult.OnError -> {
+            is GameStorageResult.OnError -> {
                 when(val getSettingsResult = settingsStorage.getSettings()){
-                    is settingsStorageResult.OnSuccess ->{
+                    is SettingsStorageResult.OnSuccess ->{
                         when(val updateGameResult = createAndWriteNewGame(getSettingsResult.settings)){
-                            is gameStorageResult.OnSuccess -> onSuccess(
+                            is GameStorageResult.OnSuccess -> onSuccess(
                                 updateGameResult.currentGame,
-                                puzzleIsCompleted(
+                                puzzleIsComplete(
                                     updateGameResult.currentGame
                                 )
                             )
-                            is gameStorageResult.OnError -> onError(updateGameResult.exception)
+                            is GameStorageResult.OnError -> onError(updateGameResult.exception)
                         }
                     }
-                    is settingsStorageResult.OnError -> onError(getSettingsResult.exception)
+                    is SettingsStorageResult.OnError -> onError(getSettingsResult.exception)
 
                 }
             }
@@ -125,8 +126,8 @@ class GameRepositoryImpl(
         onError: (Exception) -> Unit
     ) {
         when (val getSettingsResult = settingsStorage.getSettings()){
-            is settingsStorageResult.OnError -> onError(getSettingsResult.exception)
-            is settingsStorageResult.OnSuccess -> onSuccess(getSettingsResult.settings)
+            is SettingsStorageResult.OnError -> onError(getSettingsResult.exception)
+            is SettingsStorageResult.OnSuccess -> onSuccess(getSettingsResult.settings)
         }
     }
 
